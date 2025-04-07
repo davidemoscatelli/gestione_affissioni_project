@@ -1,0 +1,101 @@
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Virtual Environments (La tua richiesta specifica!)
+.env
+.venv
+env/
+venv/ # Esclude la cartella 'venv'
+ENV/
+env.bak/
+venv.bak/
+test/
+
+# Media files (File caricati dagli utenti)
+media/
+
+# staticfiles (Cartella dove 'collectstatic' mette i file)
+# Decommenta se usi una cartella specifica per static_root diversa da quella di default
+# staticfiles/
+# static_root/
+
+# IDE / Editor directories
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Security/Credentials (Aggiungi qui altri file specifici se li usi)
+# secrets.yml
+# *.key
+
+# IPython Notebook checkpoints
+.ipynb_checkpoints
+
+# Ruff cache
+.ruff_cache/
+
+# mypy cache
+.mypy_cache/
