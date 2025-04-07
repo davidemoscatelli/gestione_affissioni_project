@@ -1,0 +1,77 @@
+/* gestione/static/gestione/css/style.css */
+
+/* -- Stili Generali -- */
+body {
+    /* Esempio: Sfondo leggermente grigio per staccare dal bianco puro */
+    background-color: #f8f9fa;
+    /* Migliora la resa del font di default */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Aggiunge un'ombra leggera sotto la navbar per dare profondità */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .075);
+}
+
+/* Migliora la leggibilità dei titoli */
+h1, .h1, h2, .h2, h3, .h3 {
+  /* Puoi sperimentare con font importati da Google Fonts, ad esempio */
+  /* font-family: 'Roboto', sans-serif; */
+  font-weight: 500; /* Un po' più di spessore */
+}
+
+/* Stile per le card usate nei vari pannelli */
+.card {
+  border: none; /* Rimuove il bordo di default */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .05), 0 1px 2px rgba(0,0,0,.03); /* Ombra più sottile */
+}
+.card-header {
+     background-color: #e9ecef; /* Sfondo leggermente diverso per l'header */
+     font-weight: 600; /* Titolo header più marcato */
+     border-bottom: 1px solid #dee2e6; /* Separatore */
+}
+
+
+/* -- Stili Calendario -- */
+
+/* Stile per le affissioni nel calendario */
+.affissione-item {
+    /* Aggiungi un leggero bordo per separarle meglio */
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    /* Testo leggermente più leggibile sui colori scuri/chiari */
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+.stato-bloccato {
+     /* Assicuriamoci che il contrasto sia buono */
+     color: #343a40 !important; /* Testo scuro su sfondo giallo */
+}
+
+/* Stile per la legenda sotto il calendario */
+.calendar-legend .badge {
+    margin-right: 8px; /* Più spazio tra i badge */
+    font-size: 0.9em;  /* Badge leggermente più grandi */
+    padding: 0.4em 0.6em;
+}
+
+
+/* -- Stili Tabelle -- */
+.table {
+  /* Riduci un po' la dimensione del font nelle tabelle */
+  /* font-size: 0.95rem; */
+}
+.table thead th {
+    /* Intestazioni tabella leggermente più marcate */
+    font-weight: 600;
+    background-color: #f8f9fa; /* Sfondo leggermente diverso per l'header */
+}
+
+
+/* -- Stili Forms -- */
+/* Aggiunge un leggero focus visivo ai campi del form */
+.form-control:focus, .form-select:focus {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, .25);
+}
+
+/* Puoi aggiungere qui molti altri stili! */
