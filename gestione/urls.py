@@ -15,10 +15,7 @@ urlpatterns = [
         name='spazio_calendario'
     ),
 
-    path('spazi/<int:spazio_pk>/blocca/<int:year>/<int:month>/<int:day>/',
-         views.blocco_affissione_view,
-         name='blocca_affissione'),
-
+    path('spazi/<int:spazio_pk>/blocca/', views.blocco_slot_generico_view, name='blocca_slot_generico'),
     path('installatore/tasks/', views.task_list_installatore_view, name='installatore_task_list'),
     path('installatore/task/<int:task_pk>/', views.task_detail_installatore_view, name='installatore_task_detail'),
     path('pannello/tasks/', views.admin_task_overview_view, name='admin_task_overview'),

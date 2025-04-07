@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load static %} {# Opzionale qui #}
+
+{% block title %}{{ titolo_pagina|default:"Blocca Slot" }}{% endblock %}
+
+{% block content %}
+<h1>{{ titolo_pagina|default:"Blocca Slot Pubblicitario" }}</h1>
+<p>Stai bloccando uno slot per lo spazio: <strong>{{ spazio.identificativo }}</strong></p>
+<hr>
+
+<div class="row">
+    <div class="col-md-8">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {# Mostra eventuali errori non legati ai singoli campi #}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                        <p{% if forloop.last %} class="mb-0"{% endif %}>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {# Renderizza i campi del form AffissioneBlockForm #}
+            <div class="mb-3">
+                <label for="{{ form.cliente.id_for_label }}" class="form-label">{{ form.cliente.label }}*</label>
+                {{ form.cliente }} {# Widget Select con classe form-select dal forms.py #}
+                {% if form.cliente.errors %}
+                    <div class="invalid-feedback d-block">{% for error in form.cliente.errors %}{{ error }}{% endfor %}</div>
+                {% endif %}
+                <div class="form-text">{{ form.cliente.help_text }}</div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col">
+                    <label for="{{ form.data_inizio.id_for_label }}" class="form-label">{{ form.data_inizio.label }}*</label>
+                    {{ form.data_inizio }} {# Widget DateInput con classe form-control #}
+                     {% if form.data_inizio.errors %}
+                        <div class="invalid-feedback d-block">{% for error in form.data_inizio.errors %}{{ error }}{% endfor %}</div>
+                     {% else %}
+                         <div class="form-text">{{ form.data_inizio.help_text|default:"Giorno iniziale del blocco." }}</div>
+                     {% endif %}
+                </div>
+                <div class="col">
+                    <label for="{{ form.data_fine.id_for_label }}" class="form-label">{{ form.data_fine.label }}*</label>
+                    {{ form.data_fine }} {# Widget DateInput con classe form-control #}
+                     {% if form.data_fine.errors %}
+                        <div class="invalid-feedback d-block">{% for error in form.data_fine.errors %}{{ error }}{% endfor %}</div>
+                     {% else %}
+                         <div class="form-text">{{ form.data_fine.help_text|default:"Ultimo giorno del blocco (incluso)." }}</div>
+                     {% endif %}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.note.id_for_label }}" class="form-label">{{ form.note.label }}</label>
+                {{ form.note }} {# Widget Textarea con classe form-control #}
+                {% if form.note.errors %}
+                     <div class="invalid-feedback d-block">{% for error in form.note.errors %}{{ error }}{% endfor %}</div>
+                {% endif %}
+                 <div class="form-text">{{ form.note.help_text }}</div>
+            </div>
+
+            <hr>
+
+            <button type="submit" class="btn btn-warning">
+                 <i class="bi bi-lock-fill"></i> Blocca Slot
+            </button>
+            {# Link per tornare al calendario dello spazio specifico (mese/anno non noti qui) #}
+            <a href="{% url 'gestione:spazio_calendario' pk=spazio.pk %}" class="btn btn-secondary">
+                 <i class="bi bi-x-circle"></i> Annulla
+            </a>
+
+        </form>
+    </div>
+</div> {# Fine row #}
+
+{% endblock %}

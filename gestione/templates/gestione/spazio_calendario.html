@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% load static %} {# Potresti aggiungere {% load auth_extras %} se userai tag personalizzati #}
+{% load static %}
+{% load auth_extras %} {# Carica i tag personalizzati #}
 
 {% block title %}Calendario - {{ spazio.identificativo }}{% endblock %}
 
@@ -46,20 +47,17 @@
         white-space: nowrap;
         text-overflow: ellipsis;
         display: block; /* Occupa tutta la larghezza */
-        cursor: default; /* Cambia cursore per indicare che non è cliccabile di per sé */
+        cursor: default;
     }
+    /* QUESTE REGOLE DOVREBBERO FUNZIONARE - VERIFICA CON ISPEZIONA ELEMENTO */
     .stato-confermato { background-color: #dc3545; } /* Rosso per Confermato */
     .stato-bloccato { background-color: #ffc107; color: #343a40 !important; } /* Giallo per Bloccato */
+    /* FINE REGOLE COLORI */
     .day-content {
-        padding: 5px; /* Riduci padding interno */
-        padding-top: 25px; /* Spazio sotto il numero del giorno */
+        padding: 5px;
+        padding-top: 25px;
     }
-    .btn-block-slot { /* Stile per il bottone Blocca */
-        font-size: 0.7rem !important;
-        padding: 0.1rem 0.3rem !important;
-        width: 100%; /* Occupa tutta la larghezza disponibile */
-        margin-top: 3px;
-    }
+    /* Rimosso btn-block-slot perché il bottone non è più nelle celle */
 </style>
 {% endblock %} {# Fine extra_head #}
 
@@ -67,16 +65,26 @@
 <h1>Calendario Disponibilità</h1>
 <h2 class="mb-3">Spazio: {{ spazio.identificativo }} <small class="text-muted">({{ spazio.posizione_indirizzo }})</small></h2>
 
-{# Blocco Navigazione Mese #}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="{{ prev_month_url }}" class="btn btn-outline-primary">&laquo; Mese Prec.</a>
-    <h3 class="mb-0">{{ current_date|date:"F Y" }}</h3>
-    <a href="{{ next_month_url }}" class="btn btn-outline-primary">Mese Succ. &raquo;</a>
+{# Blocco Navigazione Mese + Pulsante Blocco Generico #}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <div class="me-auto"> {# Gruppo navigazione mese #}
+        <a href="{{ prev_month_url }}" class="btn btn-outline-primary">&laquo; Mese Prec.</a>
+        <h3 class="mb-0 d-inline-block mx-3">{{ current_date|date:"F Y" }}</h3>
+        <a href="{{ next_month_url }}" class="btn btn-outline-primary">Mese Succ. &raquo;</a>
+    </div>
+    {# Pulsante Blocco Slot (visibile a venditori O admin/staff - usa il flag dalla view) #}
+    {% if can_block_generico %}
+    <div class="ms-md-3 mt-2 mt-md-0"> {# Spaziatura corretta #}
+        <a href="{% url 'gestione:blocca_slot_generico' spazio_pk=spazio.pk %}" class="btn btn-warning">
+             <i class="bi bi-lock-fill"></i> Blocca uno Slot
+        </a>
+    </div>
+    {% endif %}
 </div>
-{# Fine Blocco Navigazione Mese #}
+{# Fine Blocco Navigazione Mese + Pulsante #}
 
 
-<table class="table table-bordered calendar-table"> {# Aggiunto table-bordered #}
+<table class="table table-bordered calendar-table">
     <thead class="table-light">
         <tr>
             <th>Lunedì</th>
@@ -105,17 +113,7 @@
                             </span>
                         {% endfor %}
 
-                        {# --- BLOCCO LINK "BLOCCA" --- #}
-                        {% if is_venditore %}
-                            {# Controlla direttamente il flag 'is_confirmed' per questo giorno #}
-                            {% if not calendar_data.day.is_confirmed %}
-                                <a href="{% url 'gestione:blocca_affissione' spazio_pk=spazio.pk year=day.year month=day.month day=day.day %}"
-                                   class="btn btn-sm btn-outline-success btn-block-slot" title="Blocca slot a partire da questo giorno">
-                                    Blocca
-                                </a>
-                            {% endif %}
-                        {% endif %}
-                        {# --- FINE BLOCCO LINK "BLOCCA" --- #}
+                        {# --- BLOCO LINK "BLOCCA" PER GIORNO RIMOSSO --- #}
 
                     {% endif %} {# Fine if giorno nel mese corrente #}
                 </div>
@@ -131,18 +129,15 @@
     <span class="badge bg-danger">Confermato</span>
     <span class="badge bg-warning text-dark">Bloccato</span>
     <span class="badge bg-light text-dark border">Oggi</span>
-    {# <span class="badge bg-secondary">Fuori Mese</span> #} {# Rimosso perché i giorni fuori mese sono già stilati #}
 </div>
 
 {% endblock %} {# Fine content #}
 
 {% block extra_scripts %}
-{# Esempio: Abilitare i tooltip di Bootstrap se si usano nell'attributo title #}
+{# Script per abilitare Tooltips #}
 <script>
-  // Abilita tutti i tooltip di Bootstrap nella pagina
   var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]:not([title=""])'))
   var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    // Controlla se un tooltip è già stato inizializzato prima di crearne uno nuovo
     if (!bootstrap.Tooltip.getInstance(tooltipTriggerEl)) {
          return new bootstrap.Tooltip(tooltipTriggerEl)
     }
