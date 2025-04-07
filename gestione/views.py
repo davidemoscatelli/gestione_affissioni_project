@@ -7,12 +7,12 @@ from datetime import date, timedelta
 # 2. Import Third-Party Libraries (Django)
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin # Import Corretto
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger # Importato una sola volta
 from django.db.models import Count # Importato una sola volta
 from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse, reverse_lazy # Import Corretto
 from django.utils import timezone
 from django.views.generic import TemplateView, ListView
 from django.views.generic.edit import CreateView
@@ -104,11 +104,10 @@ def spazio_calendario_view(request, pk, year=None, month=None):
 
     # Logica per recuperare e processare le affissioni
     cal = calendar.Calendar(firstweekday=0)
-    month_days = cal.monthdatescalendar(current_year, current_month)
-    first_day_of_calendar = month_days[0][0]
-    last_day_of_calendar = month_days[-1][-1]
+    month_days_raw = cal.monthdatescalendar(current_year, current_month) # Rinominato per chiarezza
+    first_day_of_calendar = month_days_raw[0][0]
+    last_day_of_calendar = month_days_raw[-1][-1]
 
-    # Recupera le affissioni usando l'ordinamento predefinito del modello
     affissioni_nel_periodo = Affissione.objects.filter(
         spazio=spazio,
         data_inizio__lte=last_day_of_calendar,
@@ -117,8 +116,9 @@ def spazio_calendario_view(request, pk, year=None, month=None):
 
     # Prepara i dati per il template del calendario
     calendar_data = {}
-    for week in month_days:
+    for week in month_days_raw:
         for day in week:
+            # --- MODIFICA QUI ---
             # Inizializza con entrambi i flag
             calendar_data[day] = {'affissioni': [], 'is_confirmed': False, 'is_blocked': False}
 
@@ -130,10 +130,24 @@ def spazio_calendario_view(request, pk, year=None, month=None):
                  calendar_data[current_day]['affissioni'].append(affissione)
                  if affissione.stato == 'Confermato':
                      calendar_data[current_day]['is_confirmed'] = True
+                 # --- MODIFICA QUI ---
                  # Imposta anche il flag per lo stato bloccato
                  if affissione.stato == 'Bloccato':
                        calendar_data[current_day]['is_blocked'] = True
              current_day += timedelta(days=1)
+
+    # --- NUOVA LOGICA: Pre-processa i dati per il template ---
+    processed_month_days = []
+    for week in month_days_raw:
+        processed_week = []
+        for day_date in week:
+            day_info_dict = calendar_data.get(day_date, {'affissioni': [], 'is_confirmed': False, 'is_blocked': False})
+            processed_week.append({
+                'date': day_date,
+                'data': day_info_dict
+            })
+        processed_month_days.append(processed_week)
+    # --- FINE NUOVA LOGICA ---
 
     # --- MODIFICA QUI ---
     # Determina se l'utente può usare il blocco generico (Venditore o Admin/Staff)
@@ -145,32 +159,24 @@ def spazio_calendario_view(request, pk, year=None, month=None):
     # Prepara contesto finale per il template
     context = {
         'spazio': spazio,
-        'month_days': month_days,
+        'processed_month_days': processed_month_days, # Passa la nuova struttura dati
         'current_date': date(current_year, current_month, 1),
-        'current_month': current_month,
-        'current_year': current_year,
-        'calendar_data': calendar_data,
         'today': today,
         'prev_month_url': reverse('gestione:spazio_calendario', kwargs={'pk': pk, 'year': prev_month_year, 'month': prev_month_month}),
         'next_month_url': reverse('gestione:spazio_calendario', kwargs={'pk': pk, 'year': next_month_year, 'month': next_month_month}),
-        # --- MODIFICA QUI ---
-        'can_block_generico': can_block_generico, # Passa il nuovo flag
+        'can_block_generico': can_block_generico, # Passa il nuovo flag per il pulsante
     }
     return render(request, 'gestione/spazio_calendario.html', context)
 
-# --- RIMOSSA VECCHIA VISTA blocco_affissione_view ---
-# La funzione che riceveva year, month, day non serve più
-
-# --- NUOVA VISTA PER BLOCCO SLOT GENERICO ---
+# --- NUOVA VISTA PER BLOCCO SLOT GENERICO (Sostituisce la vecchia blocco_affissione_view) ---
 @login_required
 def blocco_slot_generico_view(request, spazio_pk):
-    # Controllo permessi: Solo Venditori o Admin/Staff (coerente con chi vede il bottone)
+    # Controllo permessi: Solo Venditori o Admin/Staff
     can_block = request.user.groups.filter(name='Venditori').exists() or \
                 request.user.is_staff or \
                 request.user.groups.filter(name='Amministratori').exists()
     if not can_block:
         messages.error(request, "Non hai i permessi per bloccare uno slot.")
-        # Se è un installatore, forse rimandalo alla sua lista? Altrimenti home.
         if request.user.groups.filter(name='Installatori').exists():
             return redirect(reverse('gestione:installatore_task_list'))
         return redirect(reverse('gestione:home'))
@@ -202,7 +208,7 @@ def blocco_slot_generico_view(request, spazio_pk):
         'spazio': spazio,
         'titolo_pagina': f"Blocca Slot per Spazio {spazio.identificativo}"
     }
-    # Assumendo di riutilizzare questo template, altrimenti crea/usa uno dedicato
+    # Usa il template dedicato per il form di blocco
     return render(request, 'gestione/blocco_slot_form.html', context)
 
 
@@ -282,7 +288,7 @@ def task_detail_installatore_view(request, task_pk):
 
 @login_required
 def admin_task_overview_view(request):
-    # (Codice admin_task_overview_view - INVARIATO e CORRETTO)
+    # (Codice admin_task_overview_view - INVARIATO)
     if not (request.user.is_staff or request.user.groups.filter(name='Amministratori').exists()):
         messages.error(request, "Accesso riservato agli amministratori.")
         return redirect(reverse('gestione:home'))
@@ -304,3 +310,4 @@ def admin_task_overview_view(request):
     context = {
         'tasks_page': tasks_page,
     }
+    return render(request, 'gestione/admin_task_overview.html', context)

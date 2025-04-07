@@ -49,15 +49,14 @@
         display: block; /* Occupa tutta la larghezza */
         cursor: default;
     }
-    /* QUESTE REGOLE DOVREBBERO FUNZIONARE - VERIFICA CON ISPEZIONA ELEMENTO */
-    .stato-confermato { background-color: #dc3545; } /* Rosso per Confermato */
-    .stato-bloccato { background-color: #ffc107; color: #343a40 !important; } /* Giallo per Bloccato */
-    /* FINE REGOLE COLORI */
+    /* Regole CSS per i colori stato */
+    .stato-confermato { background-color: #dc3545; } /* Rosso */
+    .stato-bloccato { background-color: #ffc107; color: #343a40 !important; } /* Giallo */
+    /* Fine Regole CSS */
     .day-content {
         padding: 5px;
         padding-top: 25px;
     }
-    /* Rimosso btn-block-slot perché il bottone non è più nelle celle */
 </style>
 {% endblock %} {# Fine extra_head #}
 
@@ -67,22 +66,19 @@
 
 {# Blocco Navigazione Mese + Pulsante Blocco Generico #}
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-    <div class="me-auto"> {# Gruppo navigazione mese #}
+    <div class="me-auto">
         <a href="{{ prev_month_url }}" class="btn btn-outline-primary">&laquo; Mese Prec.</a>
         <h3 class="mb-0 d-inline-block mx-3">{{ current_date|date:"F Y" }}</h3>
         <a href="{{ next_month_url }}" class="btn btn-outline-primary">Mese Succ. &raquo;</a>
     </div>
-    {# Pulsante Blocco Slot (visibile a venditori O admin/staff - usa il flag dalla view) #}
     {% if can_block_generico %}
-    <div class="ms-md-3 mt-2 mt-md-0"> {# Spaziatura corretta #}
+    <div class="ms-md-3 mt-2 mt-md-0">
         <a href="{% url 'gestione:blocca_slot_generico' spazio_pk=spazio.pk %}" class="btn btn-warning">
              <i class="bi bi-lock-fill"></i> Blocca uno Slot
         </a>
     </div>
     {% endif %}
 </div>
-{# Fine Blocco Navigazione Mese + Pulsante #}
-
 
 <table class="table table-bordered calendar-table">
     <thead class="table-light">
@@ -97,30 +93,33 @@
         </tr>
     </thead>
     <tbody>
-        {% for week in month_days %}
+        {# --- CICLI AGGIORNATI --- #}
+        {% for week in processed_month_days %} {# Cicla sulla nuova struttura passata dalla view #}
         <tr>
-            {% for day in week %}
-            {# Cella per ogni giorno #}
-            <td class="{% if day.month != current_date.month %}other-month{% endif %} {% if day == today %}today{% endif %}">
-                <span class="day-number">{{ day.day }}</span>
+            {% for day_info in week %} {# Ogni elemento è un dizionario {'date': ..., 'data': ...} #}
+            {# Applica classi usando l'oggetto data: day_info.date #}
+            <td class="{% if day_info.date.month != current_date.month %}other-month{% endif %} {% if day_info.date == today %}today{% endif %}">
+                <span class="day-number">{{ day_info.date.day }}</span>
                 <div class="day-content">
-                    {% if day.month == current_date.month %} {# Controlla se il giorno è nel mese corrente #}
-                        {# Mostra affissioni esistenti #}
-                        {% for affissione in calendar_data.day.affissioni %}
+                    {% if day_info.date.month == current_date.month %} {# Controlla se il giorno è nel mese corrente #}
+
+                        {# Mostra affissioni esistenti accedendo da day_info.data.affissioni #}
+                        {% for affissione in day_info.data.affissioni %}
                             <span class="affissione-item {% if affissione.stato == 'Confermato' %}stato-confermato{% elif affissione.stato == 'Bloccato' %}stato-bloccato{% endif %}"
                                   title="{{ affissione.cliente }} ({{ affissione.stato }}) | {{ affissione.data_inizio|date:'d/m' }} - {{ affissione.data_fine|date:'d/m' }}">
                                 {{ affissione.cliente.ragione_sociale|default:affissione.cliente.nome_cognome|truncatechars:15 }}
                             </span>
                         {% endfor %}
 
-                        {# --- BLOCO LINK "BLOCCA" PER GIORNO RIMOSSO --- #}
+                        {# Il pulsante Blocca per giorno è stato rimosso da qui #}
 
                     {% endif %} {# Fine if giorno nel mese corrente #}
                 </div>
             </td>
-            {% endfor %} {# Fine ciclo giorni settimana #}
+            {% endfor %} {# Fine ciclo day_info #}
         </tr>
-        {% endfor %} {# Fine ciclo settimane #}
+        {% endfor %} {# Fine ciclo week #}
+        {# --- FINE CICLI AGGIORNATI --- #}
     </tbody>
 </table>
 
