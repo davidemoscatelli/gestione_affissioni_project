@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dettaglio Task #{{ task.pk }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Dettaglio Task #{{ task.pk }}</h1>
+    <a href="{% url 'gestione:installatore_task_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Torna alla Lista Task
+    </a>
+</div>
+
+<div class="row">
+    {# Colonna Dettagli Task #}
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                Riepilogo Task
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Stato Attuale:
+                    <span class="badge fs-6
+                        {% if task.stato_task == 'ASSEGNATO' %}bg-primary
+                        {% elif task.stato_task == 'COMPLETATO' %}bg-success
+                        {% elif task.stato_task == 'PROBLEMA' %}bg-danger
+                        {% else %}bg-secondary
+                        {% endif %}">
+                        {{ task.get_stato_task_display }}
+                    </span>
+                </li>
+                <li class="list-group-item"><strong>Data Prevista:</strong> {{ task.data_prevista_installazione|date:"l, d F Y" }}</li>
+                <li class="list-group-item"><strong>Spazio ID:</strong> {{ task.affissione.spazio.identificativo }}</li>
+                <li class="list-group-item"><strong>Indirizzo:</strong> {{ task.affissione.spazio.posizione_indirizzo }}</li>
+                <li class="list-group-item"><strong>Tipologia:</strong> {{ task.affissione.spazio.get_tipologia_display }}</li>
+                <li class="list-group-item"><strong>Cliente:</strong> {{ task.affissione.cliente }}</li>
+                <li class="list-group-item"><strong>Periodo Aff.:</strong> {{ task.affissione.data_inizio|date:"d/m/Y" }} - {{ task.affissione.data_fine|date:"d/m/Y" }}</li>
+                {% if task.note_admin %}
+                <li class="list-group-item"><strong>Note Admin:</strong><br>{{ task.note_admin|linebreaksbr }}</li>
+                {% endif %}
+                 <li class="list-group-item"><strong>Installatore:</strong> {{ task.installatore_assegnato.get_full_name|default:task.installatore_assegnato.username }}</li>
+            </ul>
+        </div>
+
+         {# Pulsante Segna come Completato (se applicabile) #}
+         {% if can_complete %} {# Flag passato dalla view #}
+         <div class="card mb-4">
+             <div class="card-body text-center">
+                  <h5 class="card-title">Completa Task</h5>
+                  <p class="card-text">Se hai terminato l'installazione e caricato le foto, puoi segnare questo task come completato.</p>
+                  <form method="post" onsubmit="return confirm('Sei sicuro di voler segnare questo task come completato?');">
+                      {% csrf_token %}
+                      <button type="submit" name="complete_task_submit" class="btn btn-success w-100">
+                          <i class="bi bi-check-circle-fill"></i> Segna come Completato
+                      </button>
+                  </form>
+             </div>
+         </div>
+         {% endif %}
+
+    </div>{# Fine colonna dettagli #}
+
+    {# Colonna Foto e Upload #}
+    <div class="col-md-6">
+        {# Sezione Foto Esistenti #}
+        <div class="card mb-4">
+             <div class="card-header">
+                Foto Caricate
+             </div>
+             <div class="card-body">
+                 {% if photos %}
+                     <div class="row row-cols-2 g-3">
+                         {% for photo in photos %}
+                         <div class="col">
+                             <figure class="figure text-center">
+                                 <a href="{{ photo.foto.url }}" target="_blank" title="Apri immagine originale">
+                                     <img src="{{ photo.foto.url }}" class="figure-img img-fluid rounded img-thumbnail" style="max-height: 150px; object-fit: cover;" alt="{{ photo.descrizione|default:'Foto installazione' }}">
+                                 </a>
+                                 <figcaption class="figure-caption">
+                                     {% if photo.descrizione %}{{ photo.descrizione }}<br>{% endif %}
+                                     <small class="text-muted">Caricata il {{ photo.data_caricamento|date:"d/m/Y H:i" }}</small>
+                                 </figcaption>
+                             </figure>
+                         </div>
+                         {% endfor %}
+                     </div>
+                 {% else %}
+                     <p class="text-muted">Nessuna foto caricata per questo task.</p>
+                 {% endif %}
+             </div>
+        </div>
+
+        {# Sezione Upload Nuova Foto (se utente autorizzato) #}
+        {% if can_upload %} {# Flag passato dalla view #}
+        <div class="card mb-4">
+            <div class="card-header">
+                Carica Nuova Foto Prova
+            </div>
+            <div class="card-body">
+                {# IMPORTANTE: enctype per upload file! #}
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    {# Mostra errori form upload se presenti #}
+                     {% if upload_form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in upload_form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                     {% endif %}
+
+                     <div class="mb-3">
+                         <label for="{{ upload_form.foto.id_for_label }}" class="form-label">{{ upload_form.foto.label }}</label>
+                         {{ upload_form.foto }} {# Widget ha già classi #}
+                         {% if upload_form.foto.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in upload_form.foto.errors %}{{ error }}{% endfor %}
+                            </div>
+                         {% endif %}
+                         <div class="form-text">{{ upload_form.foto.help_text }}</div>
+                     </div>
+
+                     <div class="mb-3">
+                         <label for="{{ upload_form.descrizione.id_for_label }}" class="form-label">{{ upload_form.descrizione.label }}</label>
+                         {{ upload_form.descrizione }} {# Widget ha già classi #}
+                         {% if upload_form.descrizione.errors %}
+                             <div class="invalid-feedback d-block">
+                                 {% for error in upload_form.descrizione.errors %}{{ error }}{% endfor %}
+                             </div>
+                         {% endif %}
+                         <div class="form-text">{{ upload_form.descrizione.help_text }}</div>
+                     </div>
+
+                    {# Bottone per inviare il form di upload #}
+                    <button type="submit" name="upload_photo_submit" class="btn btn-info">
+                        <i class="bi bi-camera-fill"></i> Carica Foto
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %} {# Fine if can_upload #}
+
+    </div>{# Fine colonna foto #}
+</div> {# Fine row #}
+
+{% endblock %}

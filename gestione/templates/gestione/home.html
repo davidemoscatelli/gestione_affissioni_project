@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Homepage - Gestione Affissioni{% endblock %}
+
+{% block content %}
+<h1>Benvenuto in Gestione Affissioni</h1>
+<p>Questa è la tua dashboard iniziale.</p>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Clienti Registrati</h5>
+                <p class="card-text fs-4">{{ num_clienti }}</p>
+                {# <a href="#" class="btn btn-primary">Gestisci Clienti</a> #}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Spazi Pubblicitari Attivi</h5>
+                <p class="card-text fs-4">{{ num_spazi }}</p>
+                <a href="{% url 'gestione:spazio_list' %}" class="btn btn-primary">Visualizza Spazi</a>
+            </div>
+        </div>
+    </div>
+    {# Aggiungi altre card riepilogative qui #}
+</div>
+
+{% endblock %}

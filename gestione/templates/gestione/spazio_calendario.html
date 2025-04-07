@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %} {# Potresti aggiungere {% load auth_extras %} se userai tag personalizzati #}
+
+{% block title %}Calendario - {{ spazio.identificativo }}{% endblock %}
+
+{% block extra_head %}
+{# CSS specifico per il calendario #}
+<style>
+    .calendar-table td {
+        height: 100px; /* Altezza celle giorno */
+        vertical-align: top;
+        border: 1px solid #dee2e6;
+        position: relative; /* Per posizionare il numero del giorno */
+    }
+    .calendar-table th {
+         text-align: center;
+         font-weight: normal;
+         font-size: 0.9em;
+         color: #6c757d;
+         padding-bottom: 0.5rem;
+    }
+    .day-number {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-size: 0.8em;
+        color: #6c757d;
+    }
+    .today {
+        background-color: #e9f5ff; /* Evidenzia giorno corrente */
+        font-weight: bold;
+    }
+    .other-month {
+        background-color: #f8f9fa; /* Giorni fuori mese */
+    }
+    .other-month .day-number {
+         color: #adb5bd; /* Numero giorno fuori mese più chiaro */
+    }
+    .affissione-item {
+        font-size: 0.75em;
+        padding: 2px 4px;
+        margin-bottom: 2px;
+        border-radius: 3px;
+        color: white;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        display: block; /* Occupa tutta la larghezza */
+        cursor: default; /* Cambia cursore per indicare che non è cliccabile di per sé */
+    }
+    .stato-confermato { background-color: #dc3545; } /* Rosso per Confermato */
+    .stato-bloccato { background-color: #ffc107; color: #343a40 !important; } /* Giallo per Bloccato */
+    .day-content {
+        padding: 5px; /* Riduci padding interno */
+        padding-top: 25px; /* Spazio sotto il numero del giorno */
+    }
+    .btn-block-slot { /* Stile per il bottone Blocca */
+        font-size: 0.7rem !important;
+        padding: 0.1rem 0.3rem !important;
+        width: 100%; /* Occupa tutta la larghezza disponibile */
+        margin-top: 3px;
+    }
+</style>
+{% endblock %} {# Fine extra_head #}
+
+{% block content %}
+<h1>Calendario Disponibilità</h1>
+<h2 class="mb-3">Spazio: {{ spazio.identificativo }} <small class="text-muted">({{ spazio.posizione_indirizzo }})</small></h2>
+
+{# Blocco Navigazione Mese #}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="{{ prev_month_url }}" class="btn btn-outline-primary">&laquo; Mese Prec.</a>
+    <h3 class="mb-0">{{ current_date|date:"F Y" }}</h3>
+    <a href="{{ next_month_url }}" class="btn btn-outline-primary">Mese Succ. &raquo;</a>
+</div>
+{# Fine Blocco Navigazione Mese #}
+
+
+<table class="table table-bordered calendar-table"> {# Aggiunto table-bordered #}
+    <thead class="table-light">
+        <tr>
+            <th>Lunedì</th>
+            <th>Martedì</th>
+            <th>Mercoledì</th>
+            <th>Giovedì</th>
+            <th>Venerdì</th>
+            <th>Sabato</th>
+            <th>Domenica</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for week in month_days %}
+        <tr>
+            {% for day in week %}
+            {# Cella per ogni giorno #}
+            <td class="{% if day.month != current_date.month %}other-month{% endif %} {% if day == today %}today{% endif %}">
+                <span class="day-number">{{ day.day }}</span>
+                <div class="day-content">
+                    {% if day.month == current_date.month %} {# Controlla se il giorno è nel mese corrente #}
+                        {# Mostra affissioni esistenti #}
+                        {% for affissione in calendar_data.day.affissioni %}
+                            <span class="affissione-item {% if affissione.stato == 'Confermato' %}stato-confermato{% elif affissione.stato == 'Bloccato' %}stato-bloccato{% endif %}"
+                                  title="{{ affissione.cliente }} ({{ affissione.stato }}) | {{ affissione.data_inizio|date:'d/m' }} - {{ affissione.data_fine|date:'d/m' }}">
+                                {{ affissione.cliente.ragione_sociale|default:affissione.cliente.nome_cognome|truncatechars:15 }}
+                            </span>
+                        {% endfor %}
+
+                        {# --- BLOCCO LINK "BLOCCA" --- #}
+                        {% if is_venditore %}
+                            {# Controlla direttamente il flag 'is_confirmed' per questo giorno #}
+                            {% if not calendar_data.day.is_confirmed %}
+                                <a href="{% url 'gestione:blocca_affissione' spazio_pk=spazio.pk year=day.year month=day.month day=day.day %}"
+                                   class="btn btn-sm btn-outline-success btn-block-slot" title="Blocca slot a partire da questo giorno">
+                                    Blocca
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                        {# --- FINE BLOCCO LINK "BLOCCA" --- #}
+
+                    {% endif %} {# Fine if giorno nel mese corrente #}
+                </div>
+            </td>
+            {% endfor %} {# Fine ciclo giorni settimana #}
+        </tr>
+        {% endfor %} {# Fine ciclo settimane #}
+    </tbody>
+</table>
+
+<div class="mt-3">
+    <strong>Legenda:</strong>
+    <span class="badge bg-danger">Confermato</span>
+    <span class="badge bg-warning text-dark">Bloccato</span>
+    <span class="badge bg-light text-dark border">Oggi</span>
+    {# <span class="badge bg-secondary">Fuori Mese</span> #} {# Rimosso perché i giorni fuori mese sono già stilati #}
+</div>
+
+{% endblock %} {# Fine content #}
+
+{% block extra_scripts %}
+{# Esempio: Abilitare i tooltip di Bootstrap se si usano nell'attributo title #}
+<script>
+  // Abilita tutti i tooltip di Bootstrap nella pagina
+  var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]:not([title=""])'))
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    // Controlla se un tooltip è già stato inizializzato prima di crearne uno nuovo
+    if (!bootstrap.Tooltip.getInstance(tooltipTriggerEl)) {
+         return new bootstrap.Tooltip(tooltipTriggerEl)
+    }
+  })
+</script>
+{% endblock %} {# Fine extra_scripts #}

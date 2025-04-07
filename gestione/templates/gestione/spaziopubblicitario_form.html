@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titolo_pagina|default:"Gestisci Spazio" }}{% endblock %}
+
+{% block content %}
+<h1>{{ titolo_pagina|default:"Gestisci Spazio Pubblicitario" }}</h1>
+<hr>
+
+<form method="post">
+    {% csrf_token %}
+
+    {# Mostra errori generali del form, se presenti #}
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <p{% if forloop.last %} class="mb-0"{% endif %}>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# Renderizza i campi del form manualmente con Bootstrap #}
+    {# Puoi usare form.as_p o form.as_table per fare più velocemente se preferisci #}
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label for="{{ form.identificativo.id_for_label }}" class="form-label">{{ form.identificativo.label }}*</label>
+            {{ form.identificativo }} {# Widget ha già classi Bootstrap dal forms.py #}
+            {% if form.identificativo.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.identificativo.errors %}{{ error }}{% endfor %}</div>
+            {% endif %}
+            <div class="form-text">{{ form.identificativo.help_text }}</div>
+        </div>
+         <div class="col-md-4">
+            <label for="{{ form.tipologia.id_for_label }}" class="form-label">{{ form.tipologia.label }}</label>
+            {{ form.tipologia }} {# Widget ha già classi Bootstrap dal forms.py #}
+            {% if form.tipologia.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.tipologia.errors %}{{ error }}{% endfor %}</div>
+            {% endif %}
+        </div>
+         <div class="col-md-4">
+            <label for="{{ form.dimensioni.id_for_label }}" class="form-label">{{ form.dimensioni.label }}</label>
+            {{ form.dimensioni }} {# Widget ha già classi Bootstrap dal forms.py #}
+            {% if form.dimensioni.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.dimensioni.errors %}{{ error }}{% endfor %}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label for="{{ form.descrizione.id_for_label }}" class="form-label">{{ form.descrizione.label }}</label>
+        {{ form.descrizione }} {# Widget ha già classi Bootstrap dal forms.py #}
+        {% if form.descrizione.errors %}
+            <div class="invalid-feedback d-block">{% for error in form.descrizione.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+    </div>
+
+     <div class="mb-3">
+        <label for="{{ form.posizione_indirizzo.id_for_label }}" class="form-label">{{ form.posizione_indirizzo.label }}</label>
+        {{ form.posizione_indirizzo }} {# Widget ha già classi Bootstrap dal forms.py #}
+        {% if form.posizione_indirizzo.errors %}
+            <div class="invalid-feedback d-block">{% for error in form.posizione_indirizzo.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label for="{{ form.posizione_lat.id_for_label }}" class="form-label">{{ form.posizione_lat.label }}</label>
+            {{ form.posizione_lat }} {# Widget ha già classi Bootstrap dal forms.py #}
+             {% if form.posizione_lat.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.posizione_lat.errors %}{{ error }}{% endfor %}</div>
+             {% endif %}
+             <div class="form-text">{{ form.posizione_lat.help_text }}</div>
+        </div>
+         <div class="col-md-6">
+            <label for="{{ form.posizione_lon.id_for_label }}" class="form-label">{{ form.posizione_lon.label }}</label>
+            {{ form.posizione_lon }} {# Widget ha già classi Bootstrap dal forms.py #}
+             {% if form.posizione_lon.errors %}
+                <div class="invalid-feedback d-block">{% for error in form.posizione_lon.errors %}{{ error }}{% endfor %}</div>
+             {% endif %}
+             <div class="form-text">{{ form.posizione_lon.help_text }}</div>
+        </div>
+    </div>
+
+     <div class="mb-3">
+        <label for="{{ form.note.id_for_label }}" class="form-label">{{ form.note.label }}</label>
+        {{ form.note }} {# Widget ha già classi Bootstrap dal forms.py #}
+        {% if form.note.errors %}
+             <div class="invalid-feedback d-block">{% for error in form.note.errors %}{{ error }}{% endfor %}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-check mb-3">
+         {{ form.attivo }} {# Widget ha già classi Bootstrap dal forms.py #}
+         <label class="form-check-label" for="{{ form.attivo.id_for_label }}">
+             {{ form.attivo.label }}
+         </label>
+          {% if form.attivo.errors %}
+             <div class="invalid-feedback d-block">{% for error in form.attivo.errors %}{{ error }}{% endfor %}</div>
+         {% endif %}
+         <div class="form-text">{{ form.attivo.help_text }}</div>
+    </div>
+
+    <hr>
+
+    <button type="submit" class="btn btn-primary">
+         <i class="bi bi-save"></i> Salva Spazio
+    </button>
+    <a href="{% url 'gestione:spazio_list' %}" class="btn btn-secondary">
+         <i class="bi bi-x-circle"></i> Annulla
+    </a>
+
+</form>
+
+{% endblock %}

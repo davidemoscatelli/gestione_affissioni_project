@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Miei Task di Installazione{% endblock %}
+
+{% block content %}
+<h1>Miei Task di Installazione</h1>
+<p>Elenco delle installazioni a te assegnate.</p>
+
+{% if not tasks_list %}
+    <div class="alert alert-info" role="alert">
+      Al momento non ci sono task assegnati a te.
+    </div>
+{% else %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Data Prevista</th>
+                    <th>Spazio (ID)</th>
+                    <th>Indirizzo Spazio</th>
+                    <th>Cliente</th>
+                    <th>Stato</th>
+                    <th>Note Admin</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks_list %}
+                <tr>
+                    <td>{{ task.data_prevista_installazione|date:"d/m/Y" }}</td>
+                    <td>{{ task.affissione.spazio.identificativo }}</td>
+                    <td>{{ task.affissione.spazio.posizione_indirizzo }}</td>
+                    <td>{{ task.affissione.cliente.ragione_sociale|default:task.affissione.cliente.nome_cognome }}</td>
+                    <td>
+                        <span class="badge
+                            {% if task.stato_task == 'ASSEGNATO' %}bg-primary
+                            {% elif task.stato_task == 'COMPLETATO' %}bg-success
+                            {% elif task.stato_task == 'PROBLEMA' %}bg-danger
+                            {% else %}bg-secondary
+                            {% endif %}">
+                            {{ task.get_stato_task_display }}
+                        </span>
+                    </td>
+                    <td>{{ task.note_admin|default:"-" }}</td>
+                    <td>
+                        {# Link alla pagina di dettaglio del task specifico #}
+                        <a href="{% url 'gestione:installatore_task_detail' task_pk=task.pk %}" class="btn btn-sm btn-primary" title="Vedi dettagli, carica foto e completa il task">
+                            <i class="bi bi-pencil-square"></i> Dettagli / Gestisci
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {# Aggiungere qui eventuale paginazione se necessaria #}
+{% endif %}
+
+{% endblock %}
