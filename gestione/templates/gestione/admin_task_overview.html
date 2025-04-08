@@ -7,10 +7,9 @@
 <h1>Panoramica Task Installazione</h1>
 <p>Monitoraggio di tutti i task di installazione.</p>
 
-{# Aggiungere qui eventuali filtri in futuro #}
-
+{# Aggiungere qui eventuali filtri in futuro (es. per stato, data, installatore) #}
 <div class="table-responsive">
-    <table class="table table-striped table-hover table-sm"> {# table-sm per renderla più compatta #}
+    <table class="table table-striped table-hover table-sm">
         <thead class="table-light">
             <tr>
                 <th>ID Task</th>
@@ -19,7 +18,7 @@
                 <th>Cliente</th>
                 <th>Installatore</th>
                 <th>Stato</th>
-                <th class="text-center">Foto</th> {# Modificato header #}
+                <th class="text-center">Foto</th>
                 <th>Azioni</th>
             </tr>
         </thead>
@@ -28,11 +27,29 @@
             <tr>
                 <td>{{ task.pk }}</td>
                 <td>{{ task.data_prevista_installazione|date:"d/m/Y" }}</td>
-                <td>{{ task.affissione.spazio.identificativo }}</td>
-                <td>{{ task.affissione.cliente }}</td>
-                <td>{{ task.installatore_assegnato.get_full_name|default:task.installatore_assegnato.username|default:"-" }}</td>
                 <td>
-                     <span class="badge fs-6
+                    <span title="{{ task.affissione.spazio.posizione_indirizzo }}">
+                        {{ task.affissione.spazio.identificativo }}
+                    </span>
+                </td>
+                <td>
+                     <span title="{{ task.affissione.cliente }}">
+                        {{ task.affissione.cliente.ragione_sociale|default:task.affissione.cliente.nome_cognome|truncatechars:25 }}
+                     </span>
+                </td>
+                {# --- BLOCCO CORRETTO PER INSTALLATORE --- #}
+                <td>
+                    {% if task.installatore_assegnato %}
+                        {# Mostra nome completo o username se nome completo non disponibile #}
+                        {{ task.installatore_assegnato.get_full_name|default:task.installatore_assegnato.username }}
+                    {% else %}
+                        {# Testo per quando l'installatore è None #}
+                        <span class="text-muted fst-italic">Non Assegnato</span>
+                    {% endif %}
+                </td>
+                {# --- FINE BLOCCO CORRETTO --- #}
+                <td>
+                     <span class="badge fs-6 {% comment %} Applica classi colore badge {% endcomment %}
                         {% if task.stato_task == 'ASSEGNATO' %}bg-primary
                         {% elif task.stato_task == 'COMPLETATO' %}bg-success
                         {% elif task.stato_task == 'PROBLEMA' %}bg-danger
@@ -48,15 +65,26 @@
                     <a href="{% url 'gestione:installatore_task_detail' task_pk=task.pk %}" class="btn btn-sm btn-outline-info" title="Vedi Dettagli e Foto">
                         <i class="bi bi-eye"></i> Dettagli
                     </a>
+                    {# Link Assegna/Modifica (se non già assegnato o DA_ASSEGNARE) #}
+                    {% if not task.installatore_assegnato or task.stato_task == 'DA_ASSEGNARE' %}
+                        <a href="{% url 'gestione:admin_assign_installer' task_pk=task.pk %}" class="btn btn-sm btn-outline-success ms-1" title="Assegna Installatore">
+                            <i class="bi bi-person-plus"></i> Assegna
+                        </a>
+                    {% else %}
+                        {# Opzionale: Link per MODIFICARE assegnazione se già assegnato e non DA_ASSEGNARE #}
+                         <a href="{% url 'gestione:admin_assign_installer' task_pk=task.pk %}" class="btn btn-sm btn-outline-warning ms-1" title="Modifica Installatore Assegnato">
+                            <i class="bi bi-person-gear"></i> Modifica Ass.
+                        </a>
+                    {% endif %}
                     {# Link opzionale all'admin standard #}
-                     <a href="{% url 'admin:gestione_taskinstallazione_change' task.pk %}" class="btn btn-sm btn-outline-secondary" title="Modifica Task nell'Admin Standard" target="_blank">
+                     <a href="{% url 'admin:gestione_taskinstallazione_change' task.pk %}" class="btn btn-sm btn-outline-secondary ms-1" title="Modifica Task nell'Admin Standard" target="_blank">
                         <i class="bi bi-pencil"></i> Admin
                     </a>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="text-center text-muted">Nessun task trovato.</td>
+                <td colspan="8" class="text-center text-muted fst-italic py-3">Nessun task di installazione trovato.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -80,9 +108,9 @@
                      <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
                 {% elif i == tasks_page.paginator.page_range.0 or i == tasks_page.paginator.page_range|last %}
                      {% if i == tasks_page.paginator.page_range.0 and tasks_page.number > 4 %}
-                        <li class="page-item d-none d-sm-block"><span class="page-link">...</span></li> {# Nascondi puntini su mobile se troppi #}
+                        <li class="page-item d-none d-sm-block"><span class="page-link">...</span></li>
                      {% elif i == tasks_page.paginator.page_range|last and tasks_page.number < tasks_page.paginator.num_pages|add:'-3' %}
-                         <li class="page-item d-none d-sm-block"><span class="page-link">...</span></li> {# Nascondi puntini su mobile se troppi #}
+                         <li class="page-item d-none d-sm-block"><span class="page-link">...</span></li>
                      {% endif %}
                      <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
                 {% endif %}

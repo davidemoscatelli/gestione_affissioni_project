@@ -22,7 +22,7 @@ from .models import (
     Cliente, SpazioPubblicitario, Affissione, TaskInstallazione, FotoInstallazione
 )
 from .forms import (
-    AffissioneBlockForm, FotoInstallazioneForm, SpazioPubblicitarioForm
+    AffissioneBlockForm, FotoInstallazioneForm, SpazioPubblicitarioForm, AssignInstallerForm
 )
 
 
@@ -311,3 +311,51 @@ def admin_task_overview_view(request):
         'tasks_page': tasks_page,
     }
     return render(request, 'gestione/admin_task_overview.html', context)
+
+@login_required
+def assign_installer_view(request, task_pk):
+    # Controllo permessi: solo staff o Amministratori possono assegnare
+    if not (request.user.is_staff or request.user.groups.filter(name='Amministratori').exists()):
+        messages.error(request, "Non hai i permessi per assegnare questo task.")
+        return redirect(reverse('gestione:home')) # O admin_task_overview? Meglio home.
+
+    task = get_object_or_404(TaskInstallazione, pk=task_pk)
+
+    # Non permettere riassegnazione se già completato? (Opzionale)
+    # if task.stato_task == 'COMPLETATO':
+    #    messages.warning(request, "Questo task è già completato e non può essere riassegnato.")
+    #    return redirect(reverse('gestione:admin_task_overview'))
+
+    if request.method == 'POST':
+        form = AssignInstallerForm(request.POST)
+        if form.is_valid():
+            selected_installer = form.cleaned_data['installatore']
+            task.installatore_assegnato = selected_installer
+            # Cambia stato a 'Assegnato' se era 'Da Assegnare'
+            if task.stato_task == 'DA_ASSEGNARE':
+                task.stato_task = 'ASSEGNATO'
+            task.save()
+            messages.success(
+                request,
+                f"Installatore '{selected_installer.username}' assegnato con successo al Task #{task.pk}."
+            )
+            return redirect(reverse('gestione:admin_task_overview')) # Torna alla lista task admin
+        else:
+            # Se form non valido, mostra di nuovo la pagina con errori
+            messages.error(request, "Errore nel form. Seleziona un installatore valido.")
+            # Ricadi nel rendering GET sotto
+    else: # GET Request
+         # Pre-popola il form se un installatore è già assegnato (per modifica)
+        initial_data = {}
+        if task.installatore_assegnato:
+            initial_data['installatore'] = task.installatore_assegnato
+        form = AssignInstallerForm(initial=initial_data)
+
+
+    context = {
+        'form': form,
+        'task': task,
+        'titolo_pagina': f"Assegna Installatore per Task #{task.pk}"
+    }
+    # Creeremo un template dedicato per questo form
+    return render(request, 'gestione/assign_installer_form.html', context)

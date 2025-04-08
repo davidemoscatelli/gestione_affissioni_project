@@ -4,6 +4,9 @@ from .models import Affissione, Cliente, SpazioPubblicitario, FotoInstallazione
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth import get_user_model
+
+User = get_user_model() # Ottieni il modello User attivo
 
 class AffissioneBlockForm(forms.ModelForm):
     cliente = forms.ModelChoiceField(
@@ -116,3 +119,14 @@ class SpazioPubblicitarioForm(forms.ModelForm):
             'posizione_lon': _("Formato decimale, es. 9.123456"),
             'attivo': _("Spunta se lo spazio è disponibile per affissioni."),
         }
+
+class AssignInstallerForm(forms.Form):
+    """
+    Form semplice per selezionare un installatore da assegnare a un Task.
+    """
+    installatore = forms.ModelChoiceField(
+        queryset=User.objects.filter(groups__name='Installatori').order_by('username'),
+        label=_("Seleziona Installatore"),
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select'}) # Applica classe Bootstrap
+    )

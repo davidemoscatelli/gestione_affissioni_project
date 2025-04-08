@@ -90,55 +90,66 @@ class AffissioneAdmin(admin.ModelAdmin): # Definisci la classe UNA SOLA VOLTA
     )
 
     # --- Azione 1: Conferma Selezionati ---
-    @admin.action(description=_('Conferma le affissioni selezionate (da Bloccato a Confermato)'))
+    @admin.action(description=_('Conferma Affissioni e Crea Task (da Bloccato a Confermato)')) # Descrizione aggiornata
     def conferma_selezionati(self, request, queryset):
+        # Filtra solo quelle che sono effettivamente bloccate
+        # Manteniamo il queryset originale bloccate per iterare dopo l'update
         bloccate = queryset.filter(stato='Bloccato')
-        updated_count = bloccate.update(stato='Confermato')
-        self.message_user(
-            request,
-            _('%(count)d affissioni sono state confermate con successo.') % {'count': updated_count},
-            messages.SUCCESS
-        )
-        not_updated_count = queryset.exclude(stato='Bloccato').count()
-        if not_updated_count > 0:
+        bloccate_ids = list(bloccate.values_list('id', flat=True)) # Memorizza gli ID
+
+        if not bloccate_ids:
+             self.message_user(request, _('Nessuna affissione selezionata era nello stato "Bloccato".'), messages.WARNING)
+             return # Esce se non c'è nulla da confermare
+
+        # Esegui l'update di stato
+        updated_count = Affissione.objects.filter(id__in=bloccate_ids).update(stato='Confermato')
+
+        # Messaggio per la conferma dello stato
+        if updated_count > 0:
+            self.message_user(
+                request,
+                _('%(count)d affissioni sono state confermate con successo.') % {'count': updated_count},
+                messages.SUCCESS
+            )
+
+        # --- NUOVA LOGICA: Crea i Task per le affissioni appena confermate ---
+        tasks_creati_count = 0
+        affissioni_confermate = Affissione.objects.filter(id__in=bloccate_ids) # Recupera gli oggetti aggiornati
+
+        for affissione in affissioni_confermate:
+            # Usa get_or_create per evitare errori se il task esistesse già per qualche motivo
+            # e per creare solo se non esiste. Imposta i default solo alla creazione.
+            task, created = TaskInstallazione.objects.get_or_create(
+                affissione=affissione,
+                defaults={
+                    'stato_task': 'DA_ASSEGNARE',
+                    # data_prevista_installazione viene impostata automaticamente dal save() del modello TaskInstallazione
+                }
+            )
+            if created:
+                tasks_creati_count += 1
+        # --- FINE NUOVA LOGICA ---
+
+        # Messaggio per la creazione dei task
+        if tasks_creati_count > 0:
              self.message_user(
                 request,
-                _('%(count)d affissioni selezionate non erano nello stato "Bloccato" e non sono state modificate.') % {'count': not_updated_count},
+                _('%(count)d nuovi Task di Installazione sono stati creati.') % {'count': tasks_creati_count},
+                messages.INFO # Usiamo INFO per distinguerlo dal messaggio di conferma stato
+            )
+
+        # Messaggio (invariato) se alcune selezionate non erano 'Bloccato'
+        not_processed_count = queryset.exclude(id__in=bloccate_ids).count()
+        if not_processed_count > 0:
+             self.message_user(
+                request,
+                _('%(count)d affissioni selezionate non erano nello stato "Bloccato" e sono state ignorate.') % {'count': not_processed_count},
                 messages.WARNING
             )
 
-    # --- Azione 2: Crea Task Installazione ---
-    @admin.action(description=_('Crea Task di Installazione per le affissioni selezionate (se Confermate)'))
-    def crea_task_installazione(self, request, queryset):
-        confermate_senza_task = queryset.filter(
-            stato='Confermato',
-            task_installazione__isnull=True
-        )
-        tasks_creati_count = 0
-        affissioni_gia_task_count = queryset.filter(
-            stato='Confermato',
-            task_installazione__isnull=False
-        ).count()
-        affissioni_non_confermate_count = queryset.exclude(stato='Confermato').count()
+    # --- Registra SOLO l'azione di conferma (che ora crea anche i task) ---
+    actions = ['conferma_selezionati'] # Rimuovi 'crea_task_installazione' da qui
 
-        for affissione in confermate_senza_task:
-            TaskInstallazione.objects.create(
-                affissione=affissione,
-                stato_task='DA_ASSEGNARE'
-            )
-            tasks_creati_count += 1
-
-        if tasks_creati_count > 0:
-            self.message_user(request, _('%(count)d Task di Installazione creati con successo.') % {'count': tasks_creati_count}, messages.SUCCESS)
-        if affissioni_gia_task_count > 0:
-             self.message_user(request, _('%(count)d affissioni selezionate avevano già un task e sono state ignorate.') % {'count': affissioni_gia_task_count}, messages.WARNING)
-        if affissioni_non_confermate_count > 0:
-             self.message_user(request, _('%(count)d affissioni selezionate non erano "Confermate" e sono state ignorate.') % {'count': affissioni_non_confermate_count}, messages.WARNING)
-        if tasks_creati_count == 0 and affissioni_gia_task_count == 0 and affissioni_non_confermate_count == 0:
-             self.message_user(request, _('Nessuna affissione valida selezionata per creare nuovi task.'), messages.INFO)
-
-    # --- Registra ENTRAMBE le azioni ---
-    actions = ['conferma_selezionati', 'crea_task_installazione']
 
 
 @admin.register(TaskInstallazione)

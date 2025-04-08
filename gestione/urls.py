@@ -19,4 +19,5 @@ urlpatterns = [
     path('installatore/tasks/', views.task_list_installatore_view, name='installatore_task_list'),
     path('installatore/task/<int:task_pk>/', views.task_detail_installatore_view, name='installatore_task_detail'),
     path('pannello/tasks/', views.admin_task_overview_view, name='admin_task_overview'),
+    path('pannello/task/<int:task_pk>/assegna/', views.assign_installer_view, name='admin_assign_installer'),
 ]
